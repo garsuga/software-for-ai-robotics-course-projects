@@ -11,8 +11,6 @@ Start Gazebo on stage 4 by running `roslaunch turtlebot3_gazebo turtlebot3_stage
 Start SLAM mapping with `roslaunch turtlebot3_slam turtlebot3_slam.launch slam_methods:=gmapping open_rviz:=false`
 Start navigation with `roslaunch project2_exploration turtlebot3_navigation.launch`
 Call `rosrun project2_exploration project2_tf_output.py` to begin outputting the current transform.
-Call `rosrun project2_exploration project2_go_to_goal.py` to begin navigating to goal positions.
-
 
 #### Tuning Variables
 This script has the robot follow a set of hard-coded positions using the `move_base` server.

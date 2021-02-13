@@ -5,6 +5,8 @@
   <arg name="open_rviz" default="true"/>
   <arg name="move_forward_only" default="false"/>
 
+  <node name="project2_go_to_goal" pkg="project2_exploration" type="project2_go_to_goal.py"/>
+
   <!-- Turtlebot3 -->
   <include file="$(find turtlebot3_bringup)/launch/turtlebot3_remote.launch">
     <arg name="model" value="$(arg model)" />
