@@ -12,6 +12,9 @@ Start SLAM mapping with `roslaunch turtlebot3_slam turtlebot3_slam.launch slam_m
 Start navigation with `roslaunch project2_exploration turtlebot3_navigation.launch`
 Call `rosrun project2_exploration project2_tf_output.py` to begin outputting the current transform.
 
+#### Demo Video
+https://2357732.kaf.kaltura.com/media/1_5uj0nu78
+
 #### Tuning Variables
 This script has the robot follow a set of hard-coded positions using the `move_base` server.
 |Variable|Description|
