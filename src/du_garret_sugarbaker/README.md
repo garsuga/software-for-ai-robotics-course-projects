@@ -3,7 +3,7 @@ Garret Sugarbaker
 
 #### Installation
 No additional Python packages are needed.
-Add the `src/du_garret_sugarbaker` directory to your Catkin workspace.
+Add the `du_garret_sugarbaker` directory to your Catkin workspace's `src` directory.
 Source your Catkin workspace's `devel/setup.sh`
 Run `catkin_make` in the root directory of your Catkin workspace.
 Start roscore by running `roscore` in a new terminal.

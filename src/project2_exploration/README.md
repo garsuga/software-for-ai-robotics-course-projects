@@ -3,7 +3,7 @@ Garret Sugarbaker
 
 #### Installation
 No additional Python packages are needed.
-Add the `src/project2_exploration` directory to your Catkin workspace.
+Add the `project2_exploration` directory to your Catkin workspace's `src` directory.
 Source your Catkin workspace's `devel/setup.sh`
 Run `catkin_make` in the root directory of your Catkin workspace.
 Start roscore by running `roscore` in a new terminal.
