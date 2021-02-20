@@ -1,5 +1,5 @@
 ### Project 2 Part 1
-Garret Sugarbaker\
+Garret Sugarbaker
 
 #### Installation
 No additional Python packages are needed.\
@@ -13,10 +13,10 @@ Start navigation and frontier mapping with `roslaunch project2_exploration turtl
 Move the robot using the `targets` array listed below or use teleop with `roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch`
 
 #### Demo Video
-https://2357732.kaf.kaltura.com/media/1_5uj0nu78\
+https://www.youtube.com/watch?v=tRJ2lEOPlZY
 
 #### Tuning Variables
 This script has the robot follow a set of hard-coded positions using the `move_base` server.\
 |Variable|Description|\
 |--------|-----------|\
-|`targets`|Ordered list of tuple positions to have the robot nagivate to in (x,y,z) format.|\
+|`targets`|Ordered list of tuple positions to have the robot nagivate to in (x,y,z) format.|
