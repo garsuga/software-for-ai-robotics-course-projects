@@ -17,4 +17,4 @@ Start SLAM mapping with `roslaunch turtlebot3_slam turtlebot3_slam.launch slam_m
 Start frontier mapping with `roslaunch project2_exploration turtlebot3_navigation.launch`
 
 #### Demo Video
-Part 2 & 3 https://www.youtube.com/watch?v=tRJ2lEOPlZY 
+Part 2 & 3 https://www.youtube.com/watch?v=qmnhddArPDE 
