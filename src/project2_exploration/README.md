@@ -1,22 +1,20 @@
-### Project 2 Part 1
+### Project 2
 Garret Sugarbaker
 
-#### Installation
-No additional Python packages are needed.\
+#### Error in Part 2
+I saw your error you commented in Canvas. That is normally due to mismatched axes but I do not encounter it in my code.\
+Perhaps we have different versions of numpy. Hopefully this fixes it: the subarray is now a tuple so there should be no question\
+of the shape of that array.
+
+#### Installation for Part 2 & 3
+Needs the sklearn Python package.\
 Add the `project2_exploration` directory to your Catkin workspace's `src` directory.\
 Source your Catkin workspace's `devel/setup.sh`\
 Run `catkin_make` in the root directory of your Catkin workspace.\
 Start roscore by running `roscore` in a new terminal.\
 Start Gazebo on stage 4 by running `roslaunch turtlebot3_gazebo turtlebot3_stage_4.launch` in another terminal.\
 Start SLAM mapping with `roslaunch turtlebot3_slam turtlebot3_slam.launch slam_methods:=gmapping open_rviz:=false`\
-Start navigation and frontier mapping with `roslaunch project2_exploration turtlebot3_navigation.launch`\
-Move the robot using the `targets` array listed below or use teleop with `roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch`
+Start frontier mapping with `roslaunch project2_exploration turtlebot3_navigation.launch`
 
 #### Demo Video
-https://www.youtube.com/watch?v=tRJ2lEOPlZY
-
-#### Tuning Variables
-This script has the robot follow a set of hard-coded positions using the `move_base` server.\
-|Variable|Description|\
-|--------|-----------|\
-|`targets`|Ordered list of tuple positions to have the robot nagivate to in (x,y,z) format.|
+Part 2 & 3 https://www.youtube.com/watch?v=tRJ2lEOPlZY 

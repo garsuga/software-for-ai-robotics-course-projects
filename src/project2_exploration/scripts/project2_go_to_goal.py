@@ -10,12 +10,9 @@ import rospy
 import tf
 from sklearn.cluster import AgglomerativeClustering
 import numpy as np
+import random
 
 if __name__ == '__main__':
-    # targets to navigate to, in order
-    #targets = [(-1,1,0),(-1,-1,0)]
-    targets = []
-
     rospy.init_node('project2_go_to_goal', anonymous=True)
 
     listener = tf.TransformListener()
@@ -25,7 +22,16 @@ if __name__ == '__main__':
     sac = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     sac.wait_for_server()
 
-    occupancy_grid = None
+    # occupancy grid from event
+    last_grid = None
+    # array; [[points in frontier]...]
+    # indices match unique_labels
+    frontiers = None
+    # array; [centroid...]
+    # indices match unique_labels
+    centroids = None
+    # array; [label...]
+    unique_labels = None
 
     # checks if any adjacent positions are empty in an occupancy grid
     def is_empty_nearby(data, x, y, width, height):
@@ -80,16 +86,12 @@ if __name__ == '__main__':
 
         return marker
 
-    last_marker_ids = None
+    #last_marker_ids = None
 
     # sends a request to remove all old markers
     def delete_old_markers():
-        global last_marker_ids
-        if last_marker_ids == None:
-            return
-
         marker_array = MarkerArray()
-        marker_array.markers = [make_marker(i, (0,0,0), (0,0,0), 1, 2) for i in last_marker_ids]
+        marker_array.markers = [make_marker(1, (0,0,0), (0,0,0), 1, 3)]
         marker_publisher.publish(marker_array)
 
     # converts an occupancy grid position to world position
@@ -113,12 +115,37 @@ if __name__ == '__main__':
         
         return (x_c / count, y_c / count)
 
-    # creates all markers for a given iteration
-    def publish_markers(positions, labels, grid_info):
-        global last_marker_ids
-        delete_old_markers()
+    # grows squares of a certain radius around known space
+    def grow_obstacles(data, width, height, radius):
+        # copy the list so we dont interfere with ourselves
+        data_temp = data[:]
+        # iterate over all values of x and y
+        for x in range(0, width):
+            for y in range(0, height):
+                # check if occupied
+                if data[x + y * width] == 100:
+                    # iterate over all offsets dx and dy in square
+                    for dx in range(-1 * radius, radius + 1):
+                        for dy in range(-1 * radius, radius + 1):
+                            # check for 0 offset
+                            if dx != 0 or dy != 0:
+                                # grow obstacle
+                                data_temp[x + dx + ((y + dy) * width)] = 100
+        return data_temp
+
+    def form_frontiers_and_centroids(positions, labels, grid_info):
+        positions = np.array(positions)
+        labels = np.array(labels)
 
         unique_labels = list(np.unique(labels))
+        frontiers = [positions[labels == label] for label in unique_labels]
+        centroids = [calculate_centroid([grid_to_world(position, grid_info) for position in frontier]) for frontier in frontiers]
+        return (frontiers, centroids, unique_labels)
+
+    # creates all markers for a given iteration
+    def publish_markers(frontiers, centroids, unique_labels, grid_info):
+        global last_marker_ids
+        delete_old_markers()
 
         # used for creating equidistant HSV colors
         deg_interval = 1.0 / len(unique_labels)
@@ -132,41 +159,39 @@ if __name__ == '__main__':
         #rospy.loginfo("colors {}".format(hsv_colors))
 
         # build markers for frontier points
-        marker_array.markers = [make_marker(i, grid_to_world(positions[i], grid_info), hsv_colors[unique_labels.index(labels[i])], 0.05, 0) for i in range(len(labels))]
-        
-        labels = np.array(labels)
-        positions = np.array(positions)
+        # marker_array.markers = [make_marker(i, grid_to_world(positions[i], grid_info), hsv_colors[unique_labels.index(labels[i])], 0.05, 0) for i in range(len(labels))]
+        marker_array.markers = []
+        for i, frontier in enumerate(frontiers):
+            marker_array.markers += [make_marker(random.randint(0, 2147000000), grid_to_world(position, grid_info), hsv_colors[i], 0.05, 0) for position in list(frontier)]
 
-        # calculate centroids
-        # this line creates a 2d array where each element is all points of a specific frontier label, then maps those positions into world space, and then calculates each centroid
-        centroids = [calculate_centroid([grid_to_world(position, grid_info) for position in frontier]) for frontier in [positions[labels == label] for label in unique_labels]]
         # append centroid markers to original markers
-        marker_array.markers = marker_array.markers + [make_marker(len(marker_array.markers) + i, centroid, hsv_colors[i], 0.25, 0) for i, centroid in enumerate(centroids)]
+        marker_array.markers = marker_array.markers + [make_marker(random.randint(0, 2147000000), centroid, hsv_colors[i], 0.25, 0) for i, centroid in enumerate(centroids)]
         
         # extract marker ids for reference
-        marker_ids = [marker.id for marker in marker_array.markers]
-        last_marker_ids = marker_ids
+        #marker_ids = [marker.id for marker in marker_array.markers]
+        #last_marker_ids = marker_ids
 
         # publish markers
         marker_publisher.publish(marker_array)
         rospy.loginfo("published {} markers".format(len(marker_array.markers)))
 
-    # callback for occupancy grid subscriber
-    def on_occupancy_grid(data):
-        global occupancy_grid
-        # convert to frontier map
-        # new_occ_grid = [100 if x == -1 else 0 for x in data.data]
-
-        #new_occ_grid = [0 for i in range(0, len(data.data))]
+    def recalc_frontiers():
+        if last_grid == None:
+            return
+        
+        data = last_grid
 
         width = data.info.width
         height = data.info.height
         # functions to convert a given 1d grid position to a 2d coordinate pair part
         y = lambda i: i // data.info.width
-        x = lambda i: i % data.info.width        
+        x = lambda i: i % data.info.width
+
+        # obstacle growth
+        new_occ_grid = grow_obstacles(list(data.data), width, height, 4)
 
         # convert occupancy grid into frontier map occupancy grid
-        new_occ_grid = [100 if is_empty_nearby(data.data, x(i), y(i), width, height) and data.data[i] == -1 else 0 for i in range(0, len(data.data))]
+        new_occ_grid = [100 if is_empty_nearby(new_occ_grid, x(i), y(i), width, height) and new_occ_grid[i] == -1 else 0 for i in range(0, len(new_occ_grid))]
 
         occupancy_grid = new_occ_grid
         data2 = data
@@ -176,11 +201,27 @@ if __name__ == '__main__':
         np_occ = np.array(occupancy_grid)
 
         # zip elements with their positions
-        np_occ = np.array(zip(np_occ, [[x(i), y(i)] for i in range(0, len(new_occ_grid))]))
+        ## I saw your error you commented in Canvas. That is normally due to mismatched axes but I do not encounter it in my code. 
+        ## Perhaps we have different versions of numpy. Hopefully this fixes it: the subarray is now a tuple so there should be no question
+        ## of the shape of this array.
+        np_occ = np.array(zip(np_occ, [(x(i), y(i)) for i in range(0, len(occupancy_grid))]))
         # create a boolean mask for elements that are frontier elements
         np_occ_mapping = np.apply_along_axis(lambda x: x[0] == 100, 1, np_occ)
         # apply mask
         np_occ_filtered = np_occ[np_occ_mapping]
+
+        if len(np_occ_filtered) == 0:
+            # no more explorable frontiers
+            global frontiers
+            global centroids
+            global unique_labels
+            frontiers = None
+            centroids = None
+            unique_labels = None
+            delete_old_markers()
+            rospy.loginfo("No more explorable frontiers!")
+            return
+        
         del np_occ_mapping
         # map array to only the position
         np_occ = np.apply_along_axis(lambda x: x[1], 1, np_occ_filtered)
@@ -189,38 +230,58 @@ if __name__ == '__main__':
         #rospy.loginfo(np_occ.shape)
         #rospy.loginfo("width: {}, height: {}".format(data.info.width, data.info.height))
 
-        clustering = AgglomerativeClustering(linkage="ward", n_clusters=5)
+        clustering = AgglomerativeClustering(linkage="ward", n_clusters=min(4, len(np_occ)))
         labels = clustering.fit_predict(np_occ)
 
         #rospy.loginfo(labels)
+
+        global frontiers
+        global centroids
+        global unique_labels
+        frontiers, centroids, unique_labels = form_frontiers_and_centroids(np_occ, labels, data.info)
         
-        publish_markers(np_occ, labels, data.info)
+        publish_markers(frontiers, centroids, unique_labels, data.info)
+
+
+    # callback for occupancy grid subscriber
+    def on_occupancy_grid(data):
+        global last_grid
+        last_grid = data
 
     rospy.Subscriber("/map", OccupancyGrid, on_occupancy_grid)
     frontiers_publisher = rospy.Publisher("/frontiers_map", OccupancyGrid)
 
-    target_index = 0
+    # find index of next largest frontier
+    def get_next_frontier_index():
+        larglen = 0
+        largind = -1
+        for i, frontier in enumerate(frontiers):
+            if len(frontier) > larglen or largind == -1:
+                larglen = len(frontier)
+                largind = i
+        return largind
 
     # returns next nav goal or None as a MoveBaseGoal
     def get_next_goal():
-        global target_index
-
-        if target_index > len(targets) - 1:
+        if frontiers == None or centroids == None:
             return None
 
-        current_target = targets[target_index]
-        target_index += 1
+        centroid = centroids[get_next_frontier_index()]
 
         current_goal = MoveBaseGoal()
         
         current_goal.target_pose.header.frame_id = "map"
         current_goal.target_pose.header.stamp = rospy.Time.now()
 
-        current_goal.target_pose.pose.position.x = current_target[0]
-        current_goal.target_pose.pose.position.y = current_target[1]
-        current_goal.target_pose.pose.position.z = current_target[2]
+        current_goal.target_pose.pose.position.x = centroid[0]
+        current_goal.target_pose.pose.position.y = centroid[1]
+        current_goal.target_pose.pose.position.z = 0
 
         current_goal.target_pose.pose.orientation.w = 1
+
+        marker_array = MarkerArray()
+        marker_array.markers = [make_marker(random.randint(0, 2147000000), centroid, (1,0,0), 0.25, 0)]
+        marker_publisher.publish(marker_array)
 
         return current_goal
 
@@ -235,6 +296,8 @@ if __name__ == '__main__':
             rospy.logwarn(e)
 
     while not rospy.is_shutdown():
+        recalc_frontiers()
+
         # get next goal or None if None exist
         current_goal = get_next_goal()
 
