@@ -204,11 +204,17 @@ if __name__ == '__main__':
         ## I saw your error you commented in Canvas. That is normally due to mismatched axes but I do not encounter it in my code. 
         ## Perhaps we have different versions of numpy. Hopefully this fixes it: the subarray is now a tuple so there should be no question
         ## of the shape of this array.
-        np_occ = np.array(zip(np_occ, [(x(i), y(i)) for i in range(0, len(occupancy_grid))]))
+        np_occ = zip(np_occ, [(x(i), y(i)) for i in range(0, len(occupancy_grid))])
+
+        np_occ_filtered = []
+        for i, ele in enumerate(np_occ):
+            if ele[0] == 100:
+                np_occ_filtered.append(ele[1])
+
         # create a boolean mask for elements that are frontier elements
-        np_occ_mapping = np.apply_along_axis(lambda x: x[0] == 100, 1, np_occ)
+        #np_occ_mapping = np.apply_along_axis(lambda x: x[0] == 100, 1, np_occ)
         # apply mask
-        np_occ_filtered = np_occ[np_occ_mapping]
+        #np_occ_filtered = np_occ[np_occ_mapping]
 
         if len(np_occ_filtered) == 0:
             # no more explorable frontiers
@@ -222,14 +228,16 @@ if __name__ == '__main__':
             rospy.loginfo("No more explorable frontiers!")
             return
         
-        del np_occ_mapping
+        #del np_occ_mapping
         # map array to only the position
-        np_occ = np.apply_along_axis(lambda x: x[1], 1, np_occ_filtered)
-        del np_occ_filtered
+        #np_occ = np.apply_along_axis(lambda x: x[1], 1, np_occ_filtered)
+        np_occ = np_occ_filtered
+        #del np_occ_filtered
         
         #rospy.loginfo(np_occ.shape)
         #rospy.loginfo("width: {}, height: {}".format(data.info.width, data.info.height))
 
+        rospy.loginfo("Creating clusters!")
         clustering = AgglomerativeClustering(linkage="ward", n_clusters=min(4, len(np_occ)))
         labels = clustering.fit_predict(np_occ)
 
