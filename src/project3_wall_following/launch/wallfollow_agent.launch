@@ -1,0 +1,3 @@
+<launch>
+    <node name="project3_wall_following" pkg="project3_wall_following" type="wallfollow.py"/>
+</launch>
