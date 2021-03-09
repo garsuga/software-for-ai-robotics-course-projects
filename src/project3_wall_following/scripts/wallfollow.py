@@ -4,6 +4,7 @@ import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
 import math
+import os
 
 if __name__ == '__main__':
     rospy.init_node('project3_wall_following', anonymous=True)
@@ -178,10 +179,10 @@ if __name__ == '__main__':
     # default action is FORWARD
 
     def debug_q_table(q_table):
-        message = '\n' + "\n".join(
+        message = "\n".join(
             [" ".join([str(e) for e in ele]) + " : " + possible_states[state_ordinal] 
             for state_ordinal, ele in enumerate(q_table)])
-        rospy.loginfo(message)
+        return message
 
     #debug_q_table(q_table)
     #q_policy({
@@ -282,6 +283,11 @@ if __name__ == '__main__':
         FRONT: TOO_FAR,
         FRONT_RIGHT: TOO_CLOSE
     }, SLIGHT_LEFT_M, 2, 0)
+
+    f = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "q-table.txt"), "w")
+    f.write("q-values : state\n" + debug_q_table(q_table))
+    f.write("\nindices correspond to {}".format(debug_action_names))
+    f.close()
 
     last_state = None
     last_state_changed = False

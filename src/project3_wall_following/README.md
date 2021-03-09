@@ -4,8 +4,11 @@ Garret Sugarbaker
 ### Method
 I defined a subset of possible states and actions beforehand. The states are strings in the form '###' where each digit is a value from 0-2.\
 0 corresponds to being 'close', 1 is 'correct', and 2 is 'far'\
+Three angles are used to represent the environment around the robot.\
+'Front' which is 0 degrees, 'front-right' which is 45 degrees, and 'right' which is 90 degrees.\
 Possible actions are combinations of turning and 'slightly' turning while either moving or remaining still or simply going forward.\
-Q-values are derived by supplying predicates to test against states and increasing the q-values for those states on ideal actions.
+Q-values are derived by supplying predicates to test against states and increasing the q-values for those states on ideal actions.\
+The q-table is generated on the fly during this task but a copy is saved to `q-table.txt` once the script is run.
 
 #### Installation
 No extra python packages are used.\
