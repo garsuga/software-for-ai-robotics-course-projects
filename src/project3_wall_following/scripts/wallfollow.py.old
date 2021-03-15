@@ -28,22 +28,14 @@ if __name__ == '__main__':
 
     probed_angles = [
         FRONT,
-        to_rad(-30),
         FRONT_RIGHT,
-        to_rad(-60),
-        RIGHT,
-        to_rad(-115),
-        to_rad(-135),
+        RIGHT
     ]
 
     debug_angle_names = [
         "FRONT",
-        "FRONT_RIGHT_FW",
         "FRONT_RIGHT",
-        "FRONT_RIGHT_BW",
-        "RIGHT",
-        "BACK_RIGHT_FW",
-        "BACK_RIGHT"
+        "RIGHT"
     ]
 
     # this value is for book-keeping and cannot be changed
@@ -316,17 +308,6 @@ if __name__ == '__main__':
         #rospy.loginfo("table before write")
         #rospy.loginfo(debug_q_table(q_table))
 
-        for state_ordinal, state_q_values in enumerate(q_table):
-            max_index = state_q_values.index(max(state_q_values))
-            for q_index, q_value in enumerate(state_q_values):
-                if q_index == max_index:
-                    state_q_values[q_index] = random.random() * 1 + 5
-                elif q_value == 0:
-                    state_q_values[q_index] = random.random() * 1
-                else:
-                    state_q_values[q_index] = random.random() * 2 + 1
-
-
         write_table_to_file(qtable_path)
     read_table_file(qtable_path)
 
@@ -391,7 +372,7 @@ if __name__ == '__main__':
 
         return max_action[1]
 
-    wait_time = .1
+    wait_time = .02
 
     elapsed_realtime = 0
     reset_simulation_callable = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
@@ -411,9 +392,9 @@ if __name__ == '__main__':
 
     is_by_wall = False
 
-    epsilon = .0
-    alpha = .0
-    gamma = .1
+    epsilon = .1
+    alpha = .1
+    gamma = .5
 
     save_interval = 2
 
@@ -435,13 +416,13 @@ if __name__ == '__main__':
         def close():
             # if the robot is too close on any dimension
             #thresh = ideal_wall_dist * (1 - wall_dist_tol) * .5
-            thresh = .215
-
-            return any(map(lambda x: x < thresh, distances))
+            thresh = .075
+            
+            return distances[0] < thresh or distances[1] < thresh or distances[2] < thresh
         def far():
             # if the robot is not close enough on any side (lost wall)
-            thresh = ideal_wall_dist * (1 + wall_dist_tol) * 1.5
-            return all(map(lambda x: x > thresh, distances[1:]))
+            thresh = ideal_wall_dist * (1 + wall_dist_tol) * 3
+            return distances[1] > thresh and distances[2] > thresh
         return not (close() or far())
 
     def get_current_reward():
@@ -496,7 +477,7 @@ if __name__ == '__main__':
             if not prior_state == None:
                 reward = get_current_reward()
                 rospy.loginfo("\tReward is {}".format(reward))
-                reward_action(prior_state, last_state, action, reward)
+                #reward_action(prior_state, last_state, action, reward)
 
             if correct_distance(last_distances):
                 if not is_by_wall:
