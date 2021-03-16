@@ -316,17 +316,6 @@ if __name__ == '__main__':
         #rospy.loginfo("table before write")
         #rospy.loginfo(debug_q_table(q_table))
 
-        for state_ordinal, state_q_values in enumerate(q_table):
-            max_index = state_q_values.index(max(state_q_values))
-            for q_index, q_value in enumerate(state_q_values):
-                if q_index == max_index:
-                    state_q_values[q_index] = random.random() * 1 + 5
-                elif q_value == 0:
-                    state_q_values[q_index] = random.random() * 1
-                else:
-                    state_q_values[q_index] = random.random() * 2 + 1
-
-
         write_table_to_file(qtable_path)
     read_table_file(qtable_path)
 
@@ -408,6 +397,7 @@ if __name__ == '__main__':
 
     max_bad_dist_time = 1
     min_el_bad_dist_time = 3
+    do_reset = False
 
     is_by_wall = False
 
@@ -508,7 +498,7 @@ if __name__ == '__main__':
                     is_by_wall = False
                     away_start_time = elapsed_realtime
                     wall_travel_dist = 0
-                elif elapsed_realtime > min_el_bad_dist_time and elapsed_realtime - away_start_time > max_bad_dist_time:
+                elif do_reset and elapsed_realtime > min_el_bad_dist_time and elapsed_realtime - away_start_time > max_bad_dist_time:
                     reset_simulation()
                     continue
             
